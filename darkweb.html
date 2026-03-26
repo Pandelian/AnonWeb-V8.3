@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ASCII ANON V8.3</title>
+<style id="mainStyle">
+body { background:black;color:#00ff88;font-family:monospace;padding:20px;margin:0; }
+.header { text-align:center;margin-bottom:20px;color:#00ffaa;text-shadow:0 0 5px #00ff88;line-height:1.1em; }
+#adminBtn { position:fixed;top:10px;right:10px;background:black;color:#00ff88;border:1px solid #00ff88;padding:5px 10px;cursor:pointer;z-index:1000; }
+textarea,input{width:100%;background:black;color:#00ff88;border:1px solid #00ff88;padding:5px;margin-bottom:5px;}
+button{background:black;color:#00ff88;border:1px solid #00ff88;cursor:pointer;margin:3px;}
+.post{border:1px solid #00ff88;padding:10px;margin-top:10px;box-shadow:0 0 10px #00ff88;transition:0.2s;}
+.post:hover{box-shadow:0 0 20px #00ffaa;}
+img{max-width:250px;display:block;margin-top:5px;}
+.blur{filter:blur(8px);}
+#editor{display:none;border:1px solid #00ff88;padding:10px;margin-top:10px;}
+#styleEditor{height:200px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+<pre>
+  ___    _   ____ ___ _   _    _    _   _ 
+  / _ \  / \ |  _ \_ _| \ | |  / \  | \ | |
+ | | | |/ _ \| | | | ||  \| | / _ \ |  \| |
+ | |_| / ___ \ |_| | || |\  |/ ___ \| |\  |
+  \___/_/   \_\___/___|_| \_/_/   \_\_| \_|
+        ASCII ANON V8.3 - INCÓGNITO TOTAL
+</pre>
+</div>
+
+<button id="adminBtn" onclick="toggleAdmin()">MODO ADMIN</button>
+
+<textarea id="text" placeholder="Mensaje..."></textarea>
+<input id="img" placeholder="URL imagen (opcional)">
+<input id="link" placeholder="Enlace (opcional)">
+<button onclick="post()">PUBLICAR</button>
+<button onclick="toggleBlur()">BORRADO BORROSO</button>
+
+<div id="editor">
+<h3>EDITOR EN TIEMPO REAL</h3>
+<textarea id="styleEditor"></textarea>
+<button onclick="applyStyle()">APLICAR CSS</button>
+</div>
+
+<div id="posts"></div>
+
+<script>
+// POSTS INICIALES VACÍOS
+let posts = [];
+let version = 8;
+
+// GENERAR ID ANÓNIMO ÚNICO
+let userId = localStorage.getItem("anonId");
+if(!userId){
+    userId = "Anon" + Math.floor(Math.random()*10000).toString().padStart(4,'0');
+    localStorage.setItem("anonId", userId);
+}
+
+// CLAVE ADMIN 200 CARACTERES
+const adminPassword = "u7V!r9T#k8M$e2P%f4L^d0G&n6S*o1Z+q3J@w5X~bC(9H)Y?A{7}E[8]F|U<0>V=Q;R:W,~N.!O`L'P\"/T-z?K$M@X!C^B&Y*H+J(2)G_8Q=R~E;D:L{0}A[5]S|U<1>O.9F/6?W`3V'7";
+
+function save(){
+    localStorage.setItem("posts", JSON.stringify(posts));
+    localStorage.setItem("version", version);
+}
+
+function post(){
+    posts.unshift({text:text.value,img:img.value,link:link.value,time:new Date().toLocaleString(),user:userId,blur:false});
+    text.value=""; img.value=""; link.value="";
+    save(); render();
+}
+
+function render(){
+    let container = document.getElementById("posts"); container.innerHTML="";
+    posts.forEach((p,i)=>{
+        let div = document.createElement("div");
+        div.className="post"+(p.blur?" blur":"");
+        div.innerHTML=`
+${p.user} | ${p.time}<br>
+${p.text}<br>
+${p.link?`<a href="${p.link}" target="_blank">${p.link}</a>`:""}
+${p.img?`<img src="${p.img}">`:""}<br>
+${p.user===userId?`<button onclick="deletePost(${i})">ELIMINAR SOLO YO</button>`:""}
+<button onclick="togglePostBlur(${i})">BORRADO BORROSO</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function deletePost(i){
+    if(posts[i].user===userId){
+        posts.splice(i,1);
+        save();
+        render();
+    }
+}
+
+function togglePostBlur(i){ posts[i].blur=!posts[i].blur; save(); render(); }
+function toggleBlur(){ posts.forEach(p=>p.blur=!p.blur); save(); render(); }
+
+function toggleAdmin(){
+    let ed = document.getElementById("editor");
+    let input = prompt("Introduce CLAVE ADMIN 200 caracteres:");
+    if(input===adminPassword){ 
+        ed.style.display = ed.style.display==='none'?'block':'none'; 
+        styleEditor.value=document.getElementById("mainStyle").innerHTML; 
+    } else alert("Clave incorrecta");
+}
+
+function applyStyle(){ document.getElementById("mainStyle").innerHTML = styleEditor.value; }
+
+render();
+
+// AUTO-REFRESH LOCAL (simula tiempo real)
+setInterval(render,2000);
+</script>
+</body>
+</html>
